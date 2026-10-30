@@ -19,6 +19,7 @@ const ASSETS = [
   { id: 'FX', name: '원/달러 환율', desc: '1달러 = 원', yahoo: 'KRW=X', cur: 'RATE', basis: '환율', clean: true },
 ];
 const SEOUL = '11';
+const FORCE = process.argv.includes('--force'); // 손으로 돌릴 때(Actions의 Run workflow)는 오늘 받은 것도 다시 받음
 
 const readJson = (f) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { return null; } };
 const writeJson = (f, obj) => { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, JSON.stringify(obj)); };
@@ -65,7 +66,7 @@ function dropSpikes(s) {
 }
 async function history() {
   const file = path.join(DATA, 'history.json'), old = readJson(file);
-  if (old && old.fetched === todayKst() && old.assets.every((a) => a.d && a.d.length)) { console.log('일별 기록: 오늘 이미 받음'); return; }
+  if (!FORCE && old && old.fetched === todayKst() && old.assets.every((a) => a.d && a.d.length)) { console.log('일별 기록: 오늘 이미 받음'); return; }
   const errors = {}, list = [];
   for (const a of ASSETS) {
     let rec = null;
@@ -141,7 +142,7 @@ async function kb(name, params) {
 }
 async function apt() {
   const file = path.join(DATA, 'apt.json'), old = readJson(file);
-  if (old && old.fetched === todayKst()) { console.log('아파트: 오늘 이미 받음'); return; }
+  if (!FORCE && old && old.fetched === todayKst()) { console.log('아파트: 오늘 이미 받음'); return; }
   try {
     const base = { 매물종별구분: '01', 매매전세코드: '01' };
     const [monthly, weekly, sqm, avg] = await Promise.all([
